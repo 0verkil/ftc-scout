@@ -41,11 +41,27 @@
     import { getClient } from "../../../../../lib/graphql/client";
     import { getDataSync } from "../../../../../lib/graphql/getData";
     import { EventPageDocument } from "../../../../../lib/graphql/generated/graphql-operations";
+    import Preview from "./Preview.svelte";
+    import { derived } from "svelte/store";
 
     export let data;
 
     $: eventStore = data.event;
     $: event = $eventStore?.data?.eventByCode!;
+
+    const teamDataStore = derived(data.teams, ($data) => {
+        return $data.map((team) => {
+            return Object.assign(
+                {
+                    team: {
+                        name: team?.data?.teamByNumber?.name,
+                        number: team?.data?.teamByNumber?.number,
+                    },
+                },
+                team?.data?.teamByNumber?.events[1]
+            );
+        });
+    });
 
     $: stats = event?.teams?.filter((t) => notEmpty(t.stats)) ?? [];
     $: insights = event?.matches?.flatMap(getMatchScores) ?? [];
@@ -80,7 +96,7 @@
             code: $page.params.code,
         };
 
-        data = { event: getDataSync(getClient(fetch), EventPageDocument, args) };
+        data = { event: getDataSync(getClient(fetch), EventPageDocument, args), teams: [] };
     }
 </script>
 
@@ -144,6 +160,12 @@
         <TabbedCard
             tabs={[
                 [faBolt, "Matches", "matches", !!event.matches.length],
+                [
+                    faTrophy,
+                    "Preview",
+                    "preview",
+                    !(!!stats.length || !!event.awards.length) && !!event.teams.length,
+                ],
                 [faTrophy, "Rankings", "rankings", !!stats.length],
                 [faBolt, "Insights", "insights", !!insights.length],
                 [faMedal, "Awards", "awards", !!event.awards.length],
@@ -164,6 +186,16 @@
 
             <TabContent name="matches">
                 <MatchTable matches={event.matches} {event} {focusedTeam} />
+            </TabContent>
+
+            <TabContent name="preview">
+                <Preview
+                    {season}
+                    remote={event.remote}
+                    eventName={event.name}
+                    teamData={$teamDataStore}
+                    {focusedTeam}
+                />
             </TabContent>
 
             <TabContent name="rankings">
