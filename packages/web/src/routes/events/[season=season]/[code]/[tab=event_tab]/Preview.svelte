@@ -10,14 +10,34 @@
 
     $: descriptor = DESCRIPTORS[season];
     $: stats = getTepStatSet(season, remote);
-    $: totalPoints = descriptor.pensSubtract || remote ? "totalPoints" : "totalPointsNp";
-    $: defaultStats = [...(remote ? [] : [totalPoints + "Opr"])];
+    //$: totalPoints = descriptor.pensSubtract || remote ? "totalPoints" : "totalPointsNp";
+    $: defaultStats = ["team", "totalPointsNpOpr"]; //[...(remote ? [] : [totalPoints + "Opr"])];
 
-    $: console.log(data);
+    //$: console.log(data);
 
-    $: data = teamData.filter((team: { stats: any }) => {
-        return !!team?.stats;
-    });
+    $: data = teamData.map(chooseLastApplicableTep).filter((team: any) => !!team);
+
+    function chooseLastApplicableTep(individualTeamData: any[]) {
+        let bestTepCandidate = null;
+        //individualTeamData.reverse();
+        // console.log(individualTeamData[0])
+        individualTeamData.sort(
+            (
+                tep: { event: { start: string | number | Date } },
+                other: { event: { start: string | number | Date } }
+            ) => new Date(tep.event.start).valueOf() - new Date(other.event.start).valueOf()
+        );
+        // console.log(individualTeamData[0])
+        for (let tep of individualTeamData) {
+            if (!!tep?.stats) {
+                console.log("new best for " + tep.team.number + " at date " + tep.event.end);
+                bestTepCandidate = tep;
+            } else {
+                continue;
+            }
+        }
+        return bestTepCandidate;
+    }
 
     $: saveId = `eventPageTep${season}${remote ? "Remote" : "Trad"}`;
 
@@ -27,17 +47,17 @@
     $: csv = { filename, title };
 </script>
 
-<LocalStatTableControls
-    {saveId}
-    {data}
-    {focusedTeam}
-    {stats}
-    {defaultStats}
-    defaultSort={{ id: "eventRank", dir: SortDir.Asc }}
-    hideRankStats={[
-        "eventRank",
-        "rankingPoints",
-        ...(descriptor.rankings.rp == "Record" ? ["record"] : ["totalPointsAvg", "totalPointsTot"]),
-    ]}
-    {csv}
-/>
+{#if data.length > 0}
+    <LocalStatTableControls
+        {saveId}
+        {data}
+        {focusedTeam}
+        {stats}
+        {defaultStats}
+        defaultSort={{ id: "totalPointsNpOpr", dir: SortDir.Asc }}
+        hideRankStats={["eventRank", "rankingPoints"]}
+        {csv}
+    />
+{:else}
+    <p>unfortunately the data is still loading</p>
+{/if}

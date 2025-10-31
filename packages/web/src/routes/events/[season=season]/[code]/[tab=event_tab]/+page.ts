@@ -27,6 +27,33 @@ export const load: PageLoad = async ({ params, fetch }) => {
     let teamData = [];
 
     if (params.tab == "preview") {
+        /*teamData = await getData(getClient(fetch), TepRecordsDocument, {
+            season,
+            skip: 0,
+            take: 500,
+            filter: { group: filterGroupToGql({
+                ty: "and",
+                children: [{
+                    ty: "cond",
+                    cond: {
+                        lhs: {
+                            ty: "var",
+                            id: "team"
+                        },
+                        op: FilterOp.Eq,
+                        rhs: {
+                            ty: "lit",
+                            lit: 14343
+                        }
+                    }
+                }] 
+            })},
+            sortBy: "totalPointsNpOpr",
+            sortDir: SortDir.Desc,
+        })
+
+        console.log(get(teamData))*/
+
         let teams = get(eventData)?.data?.eventByCode?.teams;
         if (!!!teams) {
             throw error(404, `Event with code ${params.code} does not have team data.`);

@@ -51,14 +51,15 @@
 
     const teamDataStore = derived(data.teams, ($data) => {
         return $data.map((team) => {
-            return Object.assign(
-                {
+            //console.log(team?.data?.teamByNumber?.events)
+            return team?.data?.teamByNumber?.events?.map((e) =>
+                Object.assign({
                     team: {
                         name: team?.data?.teamByNumber?.name,
                         number: team?.data?.teamByNumber?.number,
                     },
-                },
-                team?.data?.teamByNumber?.events[1]
+                    ...e,
+                })
             );
         });
     });
@@ -164,7 +165,7 @@
                     faTrophy,
                     "Preview",
                     "preview",
-                    !(!!stats.length || !!event.awards.length) && !!event.teams.length,
+                    true, //!(!!stats.length || !!event.awards.length) && !!event.teams.length,
                 ],
                 [faTrophy, "Rankings", "rankings", !!stats.length],
                 [faBolt, "Insights", "insights", !!insights.length],
